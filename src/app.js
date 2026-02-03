@@ -19,6 +19,8 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/healthz', (req, res) => res.json({ ok: true }));
 app.get('/pay', clickController.quickPay);
 app.get('/payment/callback', clickController.clickReturnCallback);
+// Single endpoint variant for Click (when both Prepare and Complete hit the same URL)
+app.post('/api/click', clickController.clickSingleEndpoint);
 app.post('/api/click/prepare', clickController.clickPrepare);
 app.post('/api/click/complete', clickController.clickComplete);
 app.use('/api', clickRoutes);

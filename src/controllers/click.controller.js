@@ -11,6 +11,23 @@ const CLICK_ACTION = {
   COMPLETE: 1
 };
 
+// Helper to choose the correct handler when both Prepare/Complete
+// are sent to the same endpoint (some Click cabinets allow only one URL)
+async function clickSingleEndpoint(req, res) {
+  const action = req.body && Number(req.body.action);
+
+  if (action === CLICK_ACTION.PREPARE) {
+    return clickPrepare(req, res);
+  }
+
+  if (action === CLICK_ACTION.COMPLETE) {
+    return clickComplete(req, res);
+  }
+
+  logger.error('Click unified endpoint: Invalid or missing action', { body: req.body });
+  return clickError(res, -3, 'Invalid action');
+}
+
 function clickError(res, code, note) {
   return res.json({ error: code, error_note: note });
 }
@@ -331,13 +348,9 @@ async function quickPay(req, res) {
   const phoneNumber = req.query.phone_number;
 
   if (!amount || amount <= 0) {
-    return res.status(400).send('Invalid amount. Use: /pay?amount=50000&phone_number=998901234567');
-  }
-
-  if (!phoneNumber) {
     return res
       .status(400)
-      .send('phone_number is required. Use: /pay?amount=50000&phone_number=998901234567');
+      .send('Invalid amount. Example: /pay?amount=50000 or /pay?amount=50000&phone_number=998901234567');
   }
 
   const clickMerchantTransId = crypto.randomUUID();
@@ -402,6 +415,7 @@ async function quickPay(req, res) {
   reversePayment,
   clickPrepare,
   clickComplete,
+  clickSingleEndpoint,
   clickReturnCallback,
   quickPay
 };
