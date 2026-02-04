@@ -345,7 +345,6 @@ async function quickPay(req, res) {
   const startTime = Date.now();
   const amount = parseFloat(req.query.amount);
   const userId = req.query.user_id ? parseInt(req.query.user_id) : 1;
-  const phoneNumber = req.query.phone_number;
 
   if (!amount || amount <= 0) {
     return res
@@ -359,38 +358,7 @@ async function quickPay(req, res) {
   const payment = await paymentRepo.createPayment({ userId, amount, clickMerchantTransId });
   const dbTime = Date.now() - dbStart;
 
-  // Method 1: If phone number provided, use Invoice API (faster, direct link)
-  if (phoneNumber) {
-    try {
-      const invoiceStart = Date.now();
-      const invoiceResponse = await clickService.createInvoice({
-        amount: payment.amount,
-        phoneNumber: phoneNumber,
-        merchantTransId: payment.click_merchant_trans_id
-      });
-      const invoiceTime = Date.now() - invoiceStart;
-
-      const totalTime = Date.now() - startTime;
-      logger.info('QuickPay with invoice', {
-        totalTime: `${totalTime}ms`,
-        dbTime: `${dbTime}ms`,
-        invoiceTime: `${invoiceTime}ms`,
-        amount,
-        phoneNumber,
-        invoiceId: invoiceResponse.invoice_id
-      });
-
-      if (invoiceResponse.error_code === 0 && invoiceResponse.invoice_id) {
-        // Redirect to invoice payment page
-        const invoiceUrl = `${config.click.baseUrl}/services/pay?invoice_id=${invoiceResponse.invoice_id}`;
-        return res.redirect(302, invoiceUrl);
-      }
-    } catch (error) {
-      logger.error('Invoice creation failed, falling back to regular payment', error);
-    }
-  }
-
-  // Method 2: Regular payment URL (fallback)
+  // Always use regular payment URL (no phone number required)
   const clickPayUrl = clickService.buildClickPayUrl({
     amount: payment.amount,
     transactionParam: payment.click_merchant_trans_id
