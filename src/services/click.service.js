@@ -42,7 +42,7 @@ async function clickApiRequest(method, path, { json } = {}) {
   const base = config.click.apiBaseUrl.endsWith('/')
     ? config.click.apiBaseUrl
     : `${config.click.apiBaseUrl}/`;
-  const normalizedPath = String(path || '').replace(/^\\//, '');
+  const normalizedPath = String(path || '').replace(/^\/+/, '');
   const url = new URL(normalizedPath, base).toString();
   const { authHeaderValue } = buildClickAuthHeader({
     merchantUserId: config.click.merchantUserId,
