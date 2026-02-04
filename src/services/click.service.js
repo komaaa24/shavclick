@@ -38,7 +38,12 @@ function buildClickPayUrl({ amount, transactionParam, returnUrl, cardType }) {
 }
 
 async function clickApiRequest(method, path, { json } = {}) {
-  const url = new URL(path, config.click.apiBaseUrl).toString();
+  // Ensure we keep the /v2/merchant prefix; leading slash in `path` would drop it.
+  const base = config.click.apiBaseUrl.endsWith('/')
+    ? config.click.apiBaseUrl
+    : `${config.click.apiBaseUrl}/`;
+  const normalizedPath = String(path || '').replace(/^\\//, '');
+  const url = new URL(normalizedPath, base).toString();
   const { authHeaderValue } = buildClickAuthHeader({
     merchantUserId: config.click.merchantUserId,
     secretKey: config.click.secretKey
