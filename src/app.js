@@ -19,6 +19,10 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/healthz', (req, res) => res.json({ ok: true }));
 app.get('/pay', clickController.quickPay);
 app.get('/payment/callback', clickController.clickReturnCallback);
+// Some Click merchant panels allow a single URL for both user return and backend callbacks.
+// Handle POST here as a safe alias to the unified endpoint so payments don't fail if the
+// provider posts to the same return_url.
+app.post('/payment/callback', clickController.clickSingleEndpoint);
 // Single endpoint variant for Click (when both Prepare and Complete hit the same URL)
 app.post('/api/click', clickController.clickSingleEndpoint);
 app.post('/api/click/prepare', clickController.clickPrepare);
